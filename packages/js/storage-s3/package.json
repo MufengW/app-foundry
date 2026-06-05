@@ -1,0 +1,18 @@
+{
+  "name": "@app-foundry/storage-s3",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "dependencies": {
+    "@app-foundry/core": "0.0.0",
+    "@app-foundry/media": "0.0.0"
+  },
+  "sideEffects": false
+}

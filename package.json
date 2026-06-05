@@ -1,0 +1,13 @@
+{
+  "name": "app-foundry",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/js/*"
+  ],
+  "scripts": {
+    "test": "node --test packages/js/*/test/*.test.js",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
