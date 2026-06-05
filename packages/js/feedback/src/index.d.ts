@@ -153,6 +153,8 @@ export interface FeedbackRecord {
   adminNote?: string | null;
   userResolvedAt?: string | null;
   userNote?: string | null;
+  notifiedAt?: string | null;
+  notifiedBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -221,6 +223,12 @@ export interface UserResolveFeedbackInput {
   userResolvedAt?: Date;
 }
 
+export interface NotifyFeedbackUserInput {
+  id: string;
+  notifiedBy?: string | null;
+  notifiedAt?: Date;
+}
+
 export interface DebugSnapshotQuery {
   userId?: string | null;
   since: Date;
@@ -246,12 +254,14 @@ export interface FeedbackRepository {
   resolve?(input: ResolveFeedbackInput & { resolvedAt: string }): Promise<FeedbackRecord>;
   resolveMany?(input: ResolveFeedbackManyInput & { resolvedAt: string }): Promise<FeedbackBulkMutationResult>;
   userResolve?(input: Omit<UserResolveFeedbackInput, "userResolvedAt"> & { userResolvedAt: string | null }): Promise<FeedbackRecord>;
+  markUserNotified?(input: NotifyFeedbackUserInput & { notifiedAt: string }): Promise<FeedbackRecord>;
 }
 
 export interface FeedbackNotifier {
   feedbackCreated?(record: FeedbackRecord): Promise<void> | void;
   feedbackResolved?(record: FeedbackRecord): Promise<void> | void;
   feedbackUserResolved?(record: FeedbackRecord): Promise<void> | void;
+  feedbackUserNotified?(record: FeedbackRecord): Promise<void> | void;
 }
 
 export interface CreateFeedbackServiceOptions {
@@ -272,6 +282,7 @@ export interface FeedbackService {
   resolve(input: ResolveFeedbackInput): Promise<FeedbackRecord>;
   resolveMany(input: ResolveFeedbackManyInput): Promise<FeedbackBulkMutationResult>;
   userResolve(input: UserResolveFeedbackInput): Promise<FeedbackRecord>;
+  notifyUser(input: NotifyFeedbackUserInput): Promise<FeedbackRecord>;
 }
 
 export declare function createFeedbackService(options: CreateFeedbackServiceOptions): FeedbackService;

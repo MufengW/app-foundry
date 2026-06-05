@@ -161,6 +161,19 @@ export function createFeedbackService(options) {
       }
       return record;
     },
+
+    async notifyUser(input) {
+      assertRepositoryMethod(repository, "markUserNotified");
+      const record = await repository.markUserNotified({
+        id: requireString(input?.id, "id"),
+        notifiedBy: typeof input?.notifiedBy === "string" ? input.notifiedBy : null,
+        notifiedAt: (input?.notifiedAt instanceof Date ? input.notifiedAt : clock()).toISOString(),
+      });
+      if (notifier?.feedbackUserNotified) {
+        await notifier.feedbackUserNotified(record);
+      }
+      return record;
+    },
   };
 }
 

@@ -28,6 +28,7 @@ function createRepository() {
     resolve: [],
     resolveMany: [],
     userResolve: [],
+    markUserNotified: [],
   };
   return {
     calls,
@@ -74,6 +75,18 @@ function createRepository() {
           status: input.resolved ? "user_resolved" : "open",
           userResolvedAt: input.userResolvedAt,
           userNote: input.userNote,
+        };
+      },
+      async markUserNotified(input) {
+        calls.markUserNotified.push(input);
+        return {
+          id: input.id,
+          userId: "user_1",
+          type: "bug",
+          content: "fixed",
+          status: "notified",
+          notifiedAt: input.notifiedAt,
+          notifiedBy: input.notifiedBy,
         };
       },
     },
@@ -204,11 +217,15 @@ describe("createFeedbackService", () => {
   it("passes through list, seen, and resolve lifecycle calls", async () => {
     const { repository, calls } = createRepository();
     const userResolveNotifications = [];
+    const userNotifiedNotifications = [];
     const service = createFeedbackService({
       repository,
       notifier: {
         feedbackUserResolved(record) {
           userResolveNotifications.push(record.id);
+        },
+        feedbackUserNotified(record) {
+          userNotifiedNotifications.push(record.id);
         },
       },
       clock: () => new Date("2026-06-05T01:00:00.000Z"),
@@ -230,6 +247,7 @@ describe("createFeedbackService", () => {
     const resolvedMany = await service.resolveMany({ ids: ["fb_1", "fb_1", "fb_2"], adminNote: "Bulk fixed" });
     const userResolved = await service.userResolve({ id: "fb_1", userId: "user_1", userNote: "Looks fixed" });
     const userReopened = await service.userResolve({ id: "fb_1", userId: "user_1", resolved: false });
+    const userNotified = await service.notifyUser({ id: "fb_1", notifiedBy: "admin_1" });
 
     assert.equal(calls.listForUser[0].limit, 200);
     assert.equal(calls.listForAdmin[0].type, "feature");
@@ -254,7 +272,11 @@ describe("createFeedbackService", () => {
     assert.equal(userResolved.status, "user_resolved");
     assert.equal(calls.userResolve[1].userResolvedAt, null);
     assert.equal(userReopened.status, "open");
+    assert.equal(calls.markUserNotified[0].notifiedAt, "2026-06-05T01:00:00.000Z");
+    assert.equal(calls.markUserNotified[0].notifiedBy, "admin_1");
+    assert.equal(userNotified.status, "notified");
     assert.deepEqual(userResolveNotifications, ["fb_1", "fb_1"]);
+    assert.deepEqual(userNotifiedNotifications, ["fb_1"]);
     await assert.rejects(() => service.resolveMany({ ids: [] }), /ids/);
   });
 });

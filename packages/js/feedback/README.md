@@ -32,6 +32,22 @@ await feedback.create({
 });
 ```
 
+Feedback lifecycle methods normalize common admin/user actions before they reach
+the repository adapter:
+
+```js
+await feedback.resolve({
+  id: "feedback_456",
+  resolvedBy: "admin_123",
+  adminNote: "Fixed in the latest build.",
+});
+
+await feedback.notifyUser({
+  id: "feedback_456",
+  notifiedBy: "admin_123",
+});
+```
+
 Feedback can also be submitted as structured fields and rendered into the same
 plain `content` value before persistence:
 
@@ -55,9 +71,12 @@ changing stored feedback rows.
 
 The service owns validation, debug snapshot creation, lifecycle input
 normalization, and notifier hooks. The consumer app still owns persistence
-through a `FeedbackRepository` adapter. Attachment uploads write through an
-injected object store, so S3, R2, MinIO, local test stores, and custom providers
-can share the same validation path.
+through a `FeedbackRepository` adapter. Notifier hooks such as
+`feedbackCreated`, `feedbackResolved`, `feedbackUserResolved`, and
+`feedbackUserNotified` keep push, email, SSE, or in-app notification plumbing in
+the consumer app. Attachment uploads write through an injected object store, so
+S3, R2, MinIO, local test stores, and custom providers can share the same
+validation path.
 
 ## Privacy Defaults
 
