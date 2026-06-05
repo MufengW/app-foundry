@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  AUDIO_UPLOAD_CONTENT_TYPES,
   createObjectKey,
   detectUploadContentType,
   extractObjectKey,
+  IMAGE_UPLOAD_CONTENT_TYPES,
   isObjectKey,
+  validateBase64Upload,
   validateUpload,
+  validateUploadBytes,
 } from "../src/index.js";
 
 describe("object key helpers", () => {
@@ -164,6 +168,86 @@ describe("validateUpload", () => {
 
     assert.equal(result.ok, false);
     assert.deepEqual(result.errors, ["missing_detected_content_type"]);
+  });
+});
+
+describe("validateUploadBytes", () => {
+  it("detects and validates bytes in one call", () => {
+    const result = validateUploadBytes({
+      bytes: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      maxBytes: 1024,
+      allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
+      requireDetectedContentType: true,
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.declaredContentType, "image/png");
+    assert.equal(result.detectedContentType, "image/png");
+    assert.equal(result.contentType, "image/png");
+    assert.equal(result.extension, "png");
+    assert.equal(result.byteSize, 8);
+  });
+
+  it("preserves declared audio content type for compatible containers when requested", () => {
+    const result = validateUploadBytes({
+      bytes: new Uint8Array([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d]),
+      declaredContentType: "audio/m4a",
+      maxBytes: 1024,
+      allowedContentTypes: AUDIO_UPLOAD_CONTENT_TYPES,
+      requireDetectedContentType: true,
+      preferDeclaredContentType: true,
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.detectedContentType, "video/mp4");
+    assert.equal(result.contentType, "audio/m4a");
+    assert.equal(result.extension, "m4a");
+  });
+
+  it("rejects invalid byte inputs", () => {
+    const result = validateUploadBytes({ bytes: "not bytes" });
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors, ["invalid_bytes"]);
+    assert.equal(result.bytes, null);
+  });
+});
+
+describe("validateBase64Upload", () => {
+  it("decodes data URIs and validates detected content", () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).toString("base64");
+    const result = validateBase64Upload({
+      data: `data:image/png;base64,${png}`,
+      maxBytes: 1024,
+      allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
+      requireDetectedContentType: true,
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.declaredContentType, "image/png");
+    assert.equal(result.detectedContentType, "image/png");
+    assert.equal(result.contentType, "image/png");
+    assert.equal(result.bytes?.byteLength, 8);
+  });
+
+  it("rejects non-base64 payloads before MIME validation", () => {
+    const result = validateBase64Upload({
+      data: "not valid base64%",
+      allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
+    });
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors, ["invalid_base64"]);
+  });
+
+  it("can reject data URIs when callers only accept raw base64", () => {
+    const result = validateBase64Upload({
+      data: "data:image/png;base64,AAAA",
+      allowDataUri: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors, ["data_uri_not_allowed"]);
   });
 });
 

@@ -64,6 +64,7 @@ Purpose:
 - stored object types
 - MIME/magic-byte validation contracts
 - image/video/audio upload safety defaults
+- bytes and base64 upload validation helpers
 - object key helpers
 - signed URL types
 - attachment metadata types

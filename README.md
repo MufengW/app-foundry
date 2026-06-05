@@ -138,12 +138,11 @@ const safeEvents = sanitizeDebugEvents([
 ### Validate Uploaded Media
 
 ```js
-import { detectUploadContentType, validateUpload } from "@app-foundry/media";
+import { IMAGE_UPLOAD_CONTENT_TYPES, validateUploadBytes } from "@app-foundry/media";
 
-const result = validateUpload({
-  declaredContentType: "image/png",
-  detectedContentType: detectUploadContentType(imageBuffer),
-  allowedContentTypes: ["image/png", "image/jpeg"],
+const result = validateUploadBytes({
+  bytes: imageBuffer,
+  allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
   maxBytes: 5 * 1024 * 1024,
   requireDetectedContentType: true
 });

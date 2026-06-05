@@ -5,7 +5,14 @@ Storage-agnostic media contracts and object-key helpers.
 ## Example
 
 ```js
-import { detectUploadContentType, extractObjectKey, validateUpload } from "@app-foundry/media";
+import {
+  IMAGE_UPLOAD_CONTENT_TYPES,
+  detectUploadContentType,
+  extractObjectKey,
+  validateBase64Upload,
+  validateUpload,
+  validateUploadBytes,
+} from "@app-foundry/media";
 
 const key = extractObjectKey("https://media.example.com/feedback/report.jpg", {
   allowedOrigins: ["https://media.example.com"],
@@ -16,6 +23,20 @@ const validation = validateUpload({
   declaredContentType: "image/jpeg",
   detectedContentType,
   byteSize: 420_000,
+  maxBytes: 2_000_000,
+  requireDetectedContentType: true,
+});
+
+const image = validateUploadBytes({
+  bytes,
+  allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
+  maxBytes: 2_000_000,
+  requireDetectedContentType: true,
+});
+
+const inlineImage = validateBase64Upload({
+  data: "data:image/png;base64,...",
+  allowedContentTypes: IMAGE_UPLOAD_CONTENT_TYPES,
   maxBytes: 2_000_000,
   requireDetectedContentType: true,
 });
@@ -36,3 +57,9 @@ Some media signatures identify a container rather than the final media kind.
 MP4, QuickTime, and M4A are treated as compatible ISO-BMFF declarations; WebM
 audio/video declarations are treated as compatible WebM container declarations;
 `audio/wav` and `audio/x-wav` are treated as aliases.
+
+`validateUploadBytes` and `validateBase64Upload` wrap detection and validation
+for common backend adapters. When a caller omits `declaredContentType`, these
+helpers can infer it from magic bytes; callers handling container aliases such
+as M4A can set `preferDeclaredContentType` to keep the app-facing MIME type
+while still requiring compatible detected bytes.

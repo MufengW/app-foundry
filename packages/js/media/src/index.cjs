@@ -17,6 +17,20 @@ const DEFAULT_ALLOWED_MEDIA_CONTENT_TYPES = [
   "audio/ogg",
 ];
 
+const IMAGE_UPLOAD_CONTENT_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+const VIDEO_UPLOAD_CONTENT_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+
+const AUDIO_UPLOAD_CONTENT_TYPES = [
+  "audio/webm",
+  "audio/mp4",
+  "audio/m4a",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/mpeg",
+  "audio/ogg",
+];
+
 const DEFAULT_ALLOWED_MEDIA_EXTENSIONS = [
   "jpg",
   "jpeg",
@@ -34,6 +48,23 @@ const DEFAULT_ALLOWED_MEDIA_EXTENSIONS = [
   "oga",
   "opus",
 ];
+
+const DEFAULT_EXTENSION_BY_CONTENT_TYPE = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "video/webm": "webm",
+  "audio/webm": "webm",
+  "audio/mp4": "m4a",
+  "audio/m4a": "m4a",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/mpeg": "mp3",
+  "audio/ogg": "ogg",
+};
 
 const UUID_WITH_EXT_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|jpeg|png|gif|webp|mp4|mov|webm|m4a|m4b|mp3|wav|ogg|oga|opus)$/i;
@@ -125,6 +156,73 @@ function validateUpload(input = {}) {
   };
 }
 
+function validateUploadBytes(input = {}) {
+  const bytes = toUint8Array(input.bytes);
+  if (!bytes) {
+    return {
+      ok: false,
+      errors: ["invalid_bytes"],
+      contentType: null,
+      byteSize: null,
+      declaredContentType: null,
+      detectedContentType: null,
+      extension: null,
+      bytes: null,
+    };
+  }
+
+  const detectedContentType = detectUploadContentType(bytes);
+  const declaredContentType =
+    normalizeContentType(input.declaredContentType) ??
+    normalizeContentType(input.defaultDeclaredContentType) ??
+    (input.inferDeclaredContentType === false ? null : detectedContentType);
+
+  const validation = validateUpload({
+    ...input,
+    declaredContentType,
+    detectedContentType,
+    byteSize: bytes.byteLength,
+  });
+  const contentType =
+    validation.ok && input.preferDeclaredContentType === true
+      ? declaredContentType ?? validation.contentType
+      : validation.contentType;
+
+  return {
+    ...validation,
+    contentType,
+    declaredContentType,
+    detectedContentType,
+    extension: contentType ? extensionForContentType(contentType, input.extensionByContentType) : null,
+    bytes,
+  };
+}
+
+function validateBase64Upload(input = {}) {
+  const decoded = decodeBase64Upload(input.data, {
+    allowDataUri: input.allowDataUri !== false,
+  });
+
+  if (!decoded.ok) {
+    return {
+      ok: false,
+      errors: decoded.errors,
+      contentType: null,
+      byteSize: null,
+      declaredContentType: normalizeContentType(input.declaredContentType) ?? decoded.declaredContentType,
+      detectedContentType: null,
+      extension: null,
+      bytes: null,
+    };
+  }
+
+  return validateUploadBytes({
+    ...input,
+    bytes: decoded.bytes,
+    declaredContentType: normalizeContentType(input.declaredContentType) ?? decoded.declaredContentType,
+  });
+}
+
 function detectUploadContentType(bytes) {
   const view = toUint8Array(bytes);
   if (!view || view.length < 4) return null;
@@ -180,6 +278,11 @@ function detectUploadContentType(bytes) {
   return null;
 }
 
+function extensionForContentType(contentType, extensionByContentType = DEFAULT_EXTENSION_BY_CONTENT_TYPE) {
+  const normalized = normalizeContentType(contentType);
+  return normalized ? extensionByContentType[normalized] ?? null : null;
+}
+
 function extensionFromKey(value) {
   const match = /\.([A-Za-z0-9]+)$/.exec(value);
   return match ? match[1].toLowerCase() : null;
@@ -208,6 +311,49 @@ function toUint8Array(value) {
     return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
   }
   if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  return null;
+}
+
+function decodeBase64Upload(data, options = {}) {
+  if (typeof data !== "string") {
+    return { ok: false, errors: ["invalid_base64"], bytes: null, declaredContentType: null };
+  }
+
+  const trimmed = data.trim();
+  const dataUri = /^data:([^;,]+);base64,(.*)$/is.exec(trimmed);
+  if (dataUri && options.allowDataUri === false) {
+    return { ok: false, errors: ["data_uri_not_allowed"], bytes: null, declaredContentType: null };
+  }
+
+  const declaredContentType = dataUri ? normalizeContentType(dataUri[1]) : null;
+  const payload = (dataUri ? dataUri[2] : trimmed).replace(/\s+/g, "");
+  if (!payload || payload.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(payload)) {
+    return { ok: false, errors: ["invalid_base64"], bytes: null, declaredContentType };
+  }
+
+  const bytes = decodeBase64ToUint8Array(payload);
+  if (!bytes || bytes.byteLength === 0) {
+    return { ok: false, errors: ["invalid_base64"], bytes: null, declaredContentType };
+  }
+
+  return { ok: true, errors: [], bytes, declaredContentType };
+}
+
+function decodeBase64ToUint8Array(value) {
+  const bufferCtor = globalThis.Buffer;
+  if (bufferCtor && typeof bufferCtor.from === "function") {
+    return new Uint8Array(bufferCtor.from(value, "base64"));
+  }
+
+  if (typeof globalThis.atob === "function") {
+    const binary = globalThis.atob(value);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes;
+  }
+
   return null;
 }
 
@@ -245,23 +391,7 @@ function extractFromAllowedBaseUrl(value, parsed, allowedBaseUrls, options) {
 function sanitizeExtension(value) {
   const text = String(value).toLowerCase();
   if (text.includes("/")) {
-    const map = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/gif": "gif",
-      "image/webp": "webp",
-      "video/mp4": "mp4",
-      "video/quicktime": "mov",
-      "video/webm": "webm",
-      "audio/webm": "webm",
-      "audio/mp4": "m4a",
-      "audio/m4a": "m4a",
-      "audio/wav": "wav",
-      "audio/x-wav": "wav",
-      "audio/mpeg": "mp3",
-      "audio/ogg": "ogg",
-    };
-    return map[text] ?? "bin";
+    return DEFAULT_EXTENSION_BY_CONTENT_TYPE[text] ?? "bin";
   }
   const cleaned = text.replace(/^\./, "").replace(/[^a-z0-9]/g, "");
   return cleaned || "bin";
@@ -284,9 +414,16 @@ function cryptoRandomId() {
 module.exports = {
   DEFAULT_ALLOWED_MEDIA_CONTENT_TYPES,
   DEFAULT_ALLOWED_MEDIA_EXTENSIONS,
+  IMAGE_UPLOAD_CONTENT_TYPES,
+  VIDEO_UPLOAD_CONTENT_TYPES,
+  AUDIO_UPLOAD_CONTENT_TYPES,
+  DEFAULT_EXTENSION_BY_CONTENT_TYPE,
   isObjectKey,
   extractObjectKey,
   createObjectKey,
   validateUpload,
+  validateUploadBytes,
+  validateBase64Upload,
   detectUploadContentType,
+  extensionForContentType,
 };

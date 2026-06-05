@@ -48,6 +48,7 @@ Deliverables:
 - `ObjectStore` interface
 - object key helpers
 - upload validation helpers
+- bytes/base64 upload validation helpers
 - S3/R2 adapter
 - signed URL helpers
 - tests
