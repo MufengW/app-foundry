@@ -4,9 +4,8 @@ const { AppFoundryError, normalizeStringList } = require("@app-foundry/core");
 const { createDebugSnapshot, redactPayload } = require("@app-foundry/debug");
 const {
   createObjectKey,
-  detectUploadContentType,
   isObjectKey,
-  validateUpload,
+  validateUploadBytes,
 } = require("@app-foundry/media");
 
 const FEEDBACK_TYPES = ["bug", "feature", "other"];
@@ -323,17 +322,14 @@ async function storeFeedbackAttachment(input) {
   }
 
   const body = toAttachmentBody(input.body);
-  const detectedContentType = detectUploadContentType(body);
-  const declaredContentType =
-    typeof input.declaredContentType === "string"
-      ? input.declaredContentType
-      : typeof input.contentType === "string"
-        ? input.contentType
-        : detectedContentType;
-  const validation = validateUpload({
-    declaredContentType,
-    detectedContentType,
-    byteSize: body.byteLength,
+  const validation = validateUploadBytes({
+    bytes: body,
+    declaredContentType:
+      typeof input.declaredContentType === "string"
+        ? input.declaredContentType
+        : typeof input.contentType === "string"
+          ? input.contentType
+          : null,
     maxBytes: input.maxBytes,
     allowedContentTypes: input.allowedContentTypes ?? DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES,
     requireDetectedContentType: input.requireDetectedContentType !== false,
