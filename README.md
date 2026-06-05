@@ -176,6 +176,32 @@ await feedback.create({
 });
 ```
 
+Structured reports can use portable field semantics while still persisting to
+the app-owned `content` column:
+
+```js
+await feedback.create({
+  type: "bug",
+  structuredContent: {
+    observedBehavior: "The feedback sheet closed after adding a screenshot.",
+    expectedBehavior: "The draft should stay open.",
+    suspectedCause: "The sheet state is reset on dismiss."
+  },
+  structuredContentOptions: {
+    headings: {
+      observedBehavior: "Observed",
+      expectedBehavior: "Expected",
+      suspectedCause: "Suspected cause"
+    }
+  },
+  userId: "user_123"
+});
+```
+
+`observedBehavior` is required by default. The optional fields are omitted when
+blank, and the generated text is handed to the same repository adapter as plain
+`content`, so no database migration is required.
+
 ### Store Feedback Screenshot Attachments
 
 ```js

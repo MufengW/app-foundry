@@ -17,6 +17,16 @@ export declare const DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES: readonly [
   "image/gif",
   "image/webp"
 ];
+export declare const STRUCTURED_FEEDBACK_FIELDS: readonly [
+  "observedBehavior",
+  "expectedBehavior",
+  "suspectedCause"
+];
+export declare const DEFAULT_STRUCTURED_FEEDBACK_HEADINGS: Readonly<{
+  observedBehavior: "Observed behavior";
+  expectedBehavior: "Expected behavior";
+  suspectedCause: "Suspected cause";
+}>;
 
 export type FeedbackType = "bug" | "feature" | "other";
 export type FeedbackAttachmentKind =
@@ -83,10 +93,35 @@ export interface StoreFeedbackAttachmentResult {
   validation: ValidateUploadResult;
 }
 
+export interface StructuredFeedbackContentInput {
+  observedBehavior?: string;
+  observed?: string;
+  bugSymptom?: string;
+  symptom?: string;
+  expectedBehavior?: string;
+  expected?: string;
+  suspectedCause?: string;
+  possibleRootCause?: string;
+  rootCause?: string;
+}
+
+export interface StructuredFeedbackContent {
+  observedBehavior: string;
+  expectedBehavior: string;
+  suspectedCause: string;
+}
+
+export interface StructuredFeedbackContentOptions {
+  requireObservedBehavior?: boolean;
+  headings?: Partial<Record<"observedBehavior" | "expectedBehavior" | "suspectedCause", string>>;
+}
+
 export interface CreateFeedbackInput {
   userId?: string | null;
   type?: FeedbackType | string;
-  content: string;
+  content?: string;
+  structuredContent?: StructuredFeedbackContentInput;
+  structuredContentOptions?: StructuredFeedbackContentOptions;
   context?: FeedbackContext;
   attachments?: FeedbackAttachmentInput[];
   attachDebugLogs?: boolean;
@@ -241,6 +276,8 @@ export interface FeedbackService {
 
 export declare function createFeedbackService(options: CreateFeedbackServiceOptions): FeedbackService;
 export declare function normalizeCreateFeedbackInput(input: CreateFeedbackInput): CreateFeedbackRecordInput;
+export declare function buildStructuredFeedbackContent(input: StructuredFeedbackContentInput, options?: StructuredFeedbackContentOptions): string;
+export declare function normalizeStructuredFeedbackInput(input: StructuredFeedbackContentInput, options?: StructuredFeedbackContentOptions): StructuredFeedbackContent;
 export declare function normalizeFeedbackType(value: unknown): FeedbackType;
 export declare function normalizeFeedbackContext(context: unknown): FeedbackContext;
 export declare function normalizeFeedbackAttachments(attachments: unknown): FeedbackAttachmentRecord[];

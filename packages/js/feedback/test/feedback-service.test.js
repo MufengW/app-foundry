@@ -3,9 +3,13 @@ import { createRequire } from "node:module";
 import { describe, it } from "node:test";
 import {
   DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES,
+  DEFAULT_STRUCTURED_FEEDBACK_HEADINGS,
+  STRUCTURED_FEEDBACK_FIELDS,
+  buildStructuredFeedbackContent,
   createFeedbackService,
   normalizeCreateFeedbackInput,
   normalizeFeedbackAttachment,
+  normalizeStructuredFeedbackInput,
   normalizeFeedbackType,
   storeFeedbackAttachment,
 } from "../src/index.js";
@@ -161,6 +165,42 @@ describe("createFeedbackService", () => {
     });
   });
 
+  it("creates feedback from structured content entries", async () => {
+    const { repository, calls } = createRepository();
+    const service = createFeedbackService({
+      repository,
+      clock: () => new Date("2026-06-05T01:00:00.000Z"),
+    });
+
+    const result = await service.create({
+      type: "BUG",
+      structuredContent: {
+        observedBehavior: "The feedback sheet closed after adding a screenshot.",
+        expectedBehavior: "The draft should stay open.",
+        suspectedCause: "The sheet state is not persisted.",
+      },
+      structuredContentOptions: {
+        headings: {
+          observedBehavior: "Observed",
+          expectedBehavior: "Expected",
+          suspectedCause: "Suspected cause",
+        },
+      },
+    });
+
+    assert.equal(result.feedback.content, [
+      "Observed",
+      "The feedback sheet closed after adding a screenshot.",
+      "",
+      "Expected",
+      "The draft should stay open.",
+      "",
+      "Suspected cause",
+      "The sheet state is not persisted.",
+    ].join("\n"));
+    assert.equal(calls.create[0].content, result.feedback.content);
+  });
+
   it("passes through list, seen, and resolve lifecycle calls", async () => {
     const { repository, calls } = createRepository();
     const userResolveNotifications = [];
@@ -239,6 +279,59 @@ describe("feedback input normalizers", () => {
 
   it("rejects blank feedback content", () => {
     assert.throws(() => normalizeCreateFeedbackInput({ type: "bug", content: "   " }), /content/);
+  });
+
+  it("builds structured feedback content with default headings", () => {
+    assert.deepEqual(STRUCTURED_FEEDBACK_FIELDS, [
+      "observedBehavior",
+      "expectedBehavior",
+      "suspectedCause",
+    ]);
+    assert.deepEqual(DEFAULT_STRUCTURED_FEEDBACK_HEADINGS, {
+      observedBehavior: "Observed behavior",
+      expectedBehavior: "Expected behavior",
+      suspectedCause: "Suspected cause",
+    });
+    assert.equal(
+      buildStructuredFeedbackContent({
+        observedBehavior: "  It froze after submit.  ",
+        expectedBehavior: "\n",
+        suspectedCause: "log flush held the form open",
+      }),
+      [
+        "Observed behavior",
+        "It froze after submit.",
+        "",
+        "Suspected cause",
+        "log flush held the form open",
+      ].join("\n")
+    );
+  });
+
+  it("normalizes structured feedback aliases and rejects missing observed behavior", () => {
+    assert.deepEqual(
+      normalizeStructuredFeedbackInput({
+        bugSymptom: "sheet disappeared",
+        expected: "draft remains",
+        possibleRootCause: "state lived only in the sheet",
+      }),
+      {
+        observedBehavior: "sheet disappeared",
+        expectedBehavior: "draft remains",
+        suspectedCause: "state lived only in the sheet",
+      }
+    );
+    assert.throws(
+      () => buildStructuredFeedbackContent({ expectedBehavior: "show a warning" }),
+      /observedBehavior/
+    );
+    assert.equal(
+      buildStructuredFeedbackContent(
+        { expectedBehavior: "show a warning" },
+        { requireObservedBehavior: false }
+      ),
+      "Expected behavior\nshow a warning"
+    );
   });
 });
 
@@ -345,6 +438,7 @@ describe("storeFeedbackAttachment", () => {
   it("exports the attachment helper from the CommonJS entry", () => {
     const cjs = require("../src/index.cjs");
     assert.equal(typeof cjs.storeFeedbackAttachment, "function");
+    assert.equal(typeof cjs.buildStructuredFeedbackContent, "function");
     assert.deepEqual(cjs.DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES, DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES);
   });
 });

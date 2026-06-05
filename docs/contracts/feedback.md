@@ -16,6 +16,7 @@ Recommended fields:
 - `userId`
 - `type`
 - `content`
+- `structuredContent`
 - `context`
 - `platform`
 - `appVersion`
@@ -69,17 +70,40 @@ Recommended fields:
 - `storageKey` or repository reference
 - `redactionPolicyVersion`
 
+### Structured Content
+
+A portable authoring model for bug reports that still stores as plain feedback
+content.
+
+Recommended fields:
+
+- `observedBehavior`
+- `expectedBehavior`
+- `suspectedCause`
+
+`observedBehavior` is required by default. Optional fields are omitted when
+blank. Consumer apps may override section headings to preserve their current
+admin copy, but AppFoundry owns the field semantics and content builder.
+
 ## Interfaces
 
 ```ts
 export interface CreateFeedbackInput {
   userId?: string | null;
   type: FeedbackType;
-  content: string;
+  content?: string;
+  structuredContent?: StructuredFeedbackContentInput;
+  structuredContentOptions?: StructuredFeedbackContentOptions;
   context?: FeedbackContext;
   attachments?: FeedbackAttachmentInput[];
   attachDebugLogs?: boolean;
   debugLogScopes?: string[];
+}
+
+export interface StructuredFeedbackContentInput {
+  observedBehavior?: string;
+  expectedBehavior?: string;
+  suspectedCause?: string;
 }
 
 export interface FeedbackService {

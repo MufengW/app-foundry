@@ -32,6 +32,27 @@ await feedback.create({
 });
 ```
 
+Feedback can also be submitted as structured fields and rendered into the same
+plain `content` value before persistence:
+
+```js
+await feedback.create({
+  userId: "user_123",
+  type: "bug",
+  structuredContent: {
+    observedBehavior: "The feedback sheet froze after I attached logs.",
+    expectedBehavior: "The submit button should finish or show retry guidance.",
+    suspectedCause: "Debug-log flush is blocking completion."
+  }
+});
+```
+
+Use `buildStructuredFeedbackContent()` directly when a route or client adapter
+needs to preview, log, or test the generated body. `observedBehavior` is required
+by default, while blank optional sections are omitted. Consumers can pass custom
+`structuredContentOptions.headings` to preserve existing admin copy without
+changing stored feedback rows.
+
 The service owns validation, debug snapshot creation, lifecycle input
 normalization, and notifier hooks. The consumer app still owns persistence
 through a `FeedbackRepository` adapter. Attachment uploads write through an

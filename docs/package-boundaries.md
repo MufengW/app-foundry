@@ -93,6 +93,7 @@ Purpose:
 
 - feedback request/response contracts
 - feedback lifecycle service
+- structured feedback content model and builder
 - repository/notifier/debug/storage interfaces
 - attachment handling policy
 - user/admin query types
@@ -113,6 +114,8 @@ Exports:
 
 ```ts
 createFeedbackService
+buildStructuredFeedbackContent
+normalizeStructuredFeedbackInput
 FeedbackRepository
 DebugLogRepository
 FeedbackNotifier

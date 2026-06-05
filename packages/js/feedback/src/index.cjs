@@ -25,6 +25,16 @@ const DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES = [
   "image/gif",
   "image/webp",
 ];
+const STRUCTURED_FEEDBACK_FIELDS = [
+  "observedBehavior",
+  "expectedBehavior",
+  "suspectedCause",
+];
+const DEFAULT_STRUCTURED_FEEDBACK_HEADINGS = {
+  observedBehavior: "Observed behavior",
+  expectedBehavior: "Expected behavior",
+  suspectedCause: "Suspected cause",
+};
 
 const FEEDBACK_TYPE_ALIASES = new Map([
   ["bug", "bug"],
@@ -162,7 +172,7 @@ function normalizeCreateFeedbackInput(input) {
     throw new AppFoundryError("Feedback input is required.", "feedback.input_required");
   }
 
-  const content = requireString(input.content, "content").trim();
+  const content = resolveFeedbackContent(input);
   if (!content) {
     throw new AppFoundryError("Feedback content is required.", "feedback.content_required");
   }
@@ -176,6 +186,65 @@ function normalizeCreateFeedbackInput(input) {
     attachDebugLogs: input.attachDebugLogs === true,
     debugLogScopes: normalizeStringList(input.debugLogScopes),
   };
+}
+
+function buildStructuredFeedbackContent(input, options = {}) {
+  const normalized = normalizeStructuredFeedbackInput(input, options);
+  const headings = {
+    ...DEFAULT_STRUCTURED_FEEDBACK_HEADINGS,
+    ...(options.headings && typeof options.headings === "object" ? options.headings : {}),
+  };
+  const sections = [
+    [headings.observedBehavior, normalized.observedBehavior],
+    [headings.expectedBehavior, normalized.expectedBehavior],
+    [headings.suspectedCause, normalized.suspectedCause],
+  ];
+  return sections
+    .filter(([, value]) => value)
+    .map(([heading, value]) => `${normalizeStructuredHeading(heading)}\n${value}`)
+    .join("\n\n");
+}
+
+function normalizeStructuredFeedbackInput(input, options = {}) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new AppFoundryError("Structured feedback input must be an object.", "feedback.structured_input_invalid");
+  }
+
+  const observedBehavior = structuredString(input, [
+    "observedBehavior",
+    "observed",
+    "bugSymptom",
+    "symptom",
+  ]);
+  const expectedBehavior = structuredString(input, [
+    "expectedBehavior",
+    "expected",
+  ]);
+  const suspectedCause = structuredString(input, [
+    "suspectedCause",
+    "possibleRootCause",
+    "rootCause",
+  ]);
+
+  if (options.requireObservedBehavior !== false && !observedBehavior) {
+    throw new AppFoundryError(
+      "Structured feedback observedBehavior is required.",
+      "feedback.structured_observed_required"
+    );
+  }
+
+  return {
+    observedBehavior,
+    expectedBehavior,
+    suspectedCause,
+  };
+}
+
+function resolveFeedbackContent(input) {
+  if (input.structuredContent != null) {
+    return buildStructuredFeedbackContent(input.structuredContent, input.structuredContentOptions).trim();
+  }
+  return requireString(input.content, "content").trim();
 }
 
 function normalizeFeedbackType(value) {
@@ -411,6 +480,25 @@ function requireString(value, fieldName) {
   return value;
 }
 
+function structuredString(input, keys) {
+  for (const key of keys) {
+    if (typeof input[key] === "string") {
+      const trimmed = input[key].trim();
+      if (trimmed) return trimmed;
+    }
+  }
+  return "";
+}
+
+function normalizeStructuredHeading(value) {
+  if (typeof value !== "string") return "";
+  const heading = value.trim();
+  if (!heading) {
+    throw new AppFoundryError("Structured feedback heading is required.", "feedback.structured_heading_required");
+  }
+  return heading;
+}
+
 function normalizeIdList(value, fieldName) {
   if (!Array.isArray(value)) {
     throw new AppFoundryError(`${fieldName} must be a non-empty string array.`, `${fieldName}.invalid`);
@@ -473,8 +561,12 @@ module.exports = {
   DEFAULT_DEBUG_SNAPSHOT_WINDOW_MINUTES,
   DEFAULT_DEBUG_SNAPSHOT_MAX_EVENTS,
   DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES,
+  STRUCTURED_FEEDBACK_FIELDS,
+  DEFAULT_STRUCTURED_FEEDBACK_HEADINGS,
   createFeedbackService,
   normalizeCreateFeedbackInput,
+  buildStructuredFeedbackContent,
+  normalizeStructuredFeedbackInput,
   normalizeFeedbackType,
   normalizeFeedbackContext,
   normalizeFeedbackAttachments,
