@@ -74,6 +74,52 @@ final class AppFoundrySwiftTests: XCTestCase {
     }
   }
 
+  func testStructuredFeedbackContentBuildsPortableSections() throws {
+    let content = StructuredFeedbackContent(
+      observedBehavior: "  Sheet closed after I added a screenshot.  ",
+      expectedBehavior: "Draft should stay open.",
+      suspectedCause: "Sheet state is reset on dismiss."
+    )
+
+    XCTAssertEqual(
+      try content.buildContent(),
+      [
+        "Observed behavior",
+        "Sheet closed after I added a screenshot.",
+        "",
+        "Expected behavior",
+        "Draft should stay open.",
+        "",
+        "Suspected cause",
+        "Sheet state is reset on dismiss."
+      ].joined(separator: "\n")
+    )
+
+    XCTAssertEqual(
+      try StructuredFeedbackContent(
+        observedBehavior: "  UI froze  ",
+        expectedBehavior: "\n",
+        suspectedCause: nil
+      ).buildContent(headings: StructuredFeedbackContentHeadings(
+        observedBehavior: "Bug symptom",
+        expectedBehavior: "Expected",
+        suspectedCause: "Possible cause"
+      )),
+      "Bug symptom\nUI froze"
+    )
+
+    XCTAssertThrowsError(try StructuredFeedbackContent(observedBehavior: " ").buildContent()) { error in
+      XCTAssertEqual((error as? AppFoundryIssue)?.code, "feedback_observed_behavior_required")
+    }
+    XCTAssertThrowsError(
+      try StructuredFeedbackContent(observedBehavior: "UI froze").buildContent(
+        headings: StructuredFeedbackContentHeadings(observedBehavior: " ", expectedBehavior: "Expected")
+      )
+    ) { error in
+      XCTAssertEqual((error as? AppFoundryIssue)?.code, "feedback_structured_heading_required")
+    }
+  }
+
   func testMultipartFormDataBuilder() throws {
     let form = try MultipartFormDataBuilder.build(
       parts: [

@@ -41,6 +41,17 @@ let submission = try FeedbackDraft(
 ).validated()
 ```
 
+Structured bug reports can use the same field semantics as the JavaScript
+feedback package while still submitting plain text to an app-owned API:
+
+```swift
+let content = try StructuredFeedbackContent(
+  observedBehavior: "The feedback sheet closed after adding a screenshot.",
+  expectedBehavior: "The draft should stay open.",
+  suspectedCause: "The sheet state reset on dismiss."
+).buildContent()
+```
+
 ## Development
 
 ```bash

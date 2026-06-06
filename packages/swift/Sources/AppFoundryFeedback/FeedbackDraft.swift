@@ -82,6 +82,77 @@ public struct FeedbackContext: Codable, Equatable {
   }
 }
 
+public struct StructuredFeedbackContentHeadings: Equatable {
+  public var observedBehavior: String
+  public var expectedBehavior: String
+  public var suspectedCause: String
+
+  public init(
+    observedBehavior: String = "Observed behavior",
+    expectedBehavior: String = "Expected behavior",
+    suspectedCause: String = "Suspected cause"
+  ) {
+    self.observedBehavior = observedBehavior
+    self.expectedBehavior = expectedBehavior
+    self.suspectedCause = suspectedCause
+  }
+}
+
+public struct StructuredFeedbackContent: Codable, Equatable {
+  public var observedBehavior: String
+  public var expectedBehavior: String?
+  public var suspectedCause: String?
+
+  public init(
+    observedBehavior: String,
+    expectedBehavior: String? = nil,
+    suspectedCause: String? = nil
+  ) {
+    self.observedBehavior = observedBehavior
+    self.expectedBehavior = expectedBehavior
+    self.suspectedCause = suspectedCause
+  }
+
+  public func normalized(requireObservedBehavior: Bool = true) throws -> StructuredFeedbackContent {
+    let observed = observedBehavior.trimmingCharacters(in: .whitespacesAndNewlines)
+    if requireObservedBehavior && observed.isEmpty {
+      throw AppFoundryIssue("feedback_observed_behavior is required.", code: "feedback_observed_behavior_required")
+    }
+
+    return StructuredFeedbackContent(
+      observedBehavior: observed,
+      expectedBehavior: trimmedOptional(expectedBehavior),
+      suspectedCause: trimmedOptional(suspectedCause)
+    )
+  }
+
+  public func buildContent(
+    headings: StructuredFeedbackContentHeadings = StructuredFeedbackContentHeadings(),
+    requireObservedBehavior: Bool = true
+  ) throws -> String {
+    let normalized = try normalized(requireObservedBehavior: requireObservedBehavior)
+    var sections: [String] = []
+    for (heading, value) in [
+      (headings.observedBehavior, normalized.observedBehavior),
+      (headings.expectedBehavior, normalized.expectedBehavior ?? ""),
+      (headings.suspectedCause, normalized.suspectedCause ?? "")
+    ] where !value.isEmpty {
+      let normalizedHeading = heading.trimmingCharacters(in: .whitespacesAndNewlines)
+      if normalizedHeading.isEmpty {
+        throw AppFoundryIssue("Structured feedback heading is required.", code: "feedback_structured_heading_required")
+      }
+      sections.append("\(normalizedHeading)\n\(value)")
+    }
+    return sections.joined(separator: "\n\n")
+  }
+
+  private func trimmedOptional(_ value: String?) -> String? {
+    guard let value else { return nil }
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+  }
+}
+
 public struct FeedbackDraftPolicy: Equatable {
   public var maxContentCharacters: Int
   public var maxAttachments: Int
