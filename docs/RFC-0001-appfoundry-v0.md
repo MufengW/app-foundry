@@ -212,11 +212,15 @@ AppFoundry should not extract product workflows:
 
 ### Phase 4: Optional Auth Session Helpers
 
+- TODO (deferred): keep this out of the current V0 acceptance gate. Revisit
+  after feedback and media safety adoption has passed consumer verification.
 - Extract client refresh coordinator and secure token store patterns only after feedback/media APIs stabilize.
 - Treat logout revocation and token versioning as optional adapter guidance, not V0 core.
 
 ### Phase 5: Optional Social Helpers
 
+- TODO (deferred): keep this out of the current V0 acceptance gate. Revisit
+  only if generic relationship-state helpers remain useful across consumers.
 - Extract only generic relationship state-machine helpers if still useful.
 - Keep app-specific inventory, sharing, discoverability, or social behavior inside consumer apps.
 

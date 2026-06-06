@@ -144,6 +144,20 @@ npx app-foundry add feedback --dry-run
 
 This is not V0 unless earlier stages are stable.
 
+## Deferred Optional Rails
+
+Outcome:
+
+- Optional auth-session and social-state helpers remain outside the current V0
+  acceptance gate.
+
+TODO:
+
+- Revisit auth-session helpers only after feedback and media safety adoption has
+  passed consumer verification.
+- Revisit social-state helpers only if generic relationship-state primitives are
+  useful across consumers without importing app-specific behavior.
+
 ## Stage 7: Public Release
 
 Outcome:
