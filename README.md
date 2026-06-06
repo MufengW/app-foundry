@@ -37,6 +37,7 @@ Current packages:
 | `packages/swift/AppFoundryUpload` | Swift multipart form-data builder and upload primitives. |
 | `packages/swift/AppFoundryMedia` | Swift image/video/audio upload preparation and magic-byte validation. |
 | `packages/kotlin/media` | Kotlin/JVM image/video/audio upload preparation and magic-byte validation. |
+| `packages/arkts/media` | ArkTS image/video/audio upload preparation and magic-byte validation. |
 
 Planned or recipe-backed areas:
 

@@ -250,6 +250,23 @@ Must avoid:
 - OkHttp, Retrofit, or storage-provider dependencies
 - app-specific purpose names or backend routes
 
+## ArkTS Packages
+
+### `packages/arkts/media`
+
+Purpose:
+
+- ArkTS image, video, and audio upload preparation for HarmonyOS clients
+- magic-byte MIME detection
+- reusable upload policies before app-owned multipart transport
+- normalized file-extension hints
+
+Must avoid:
+
+- HarmonyOS picker or HTTP dependencies
+- app-specific routes, copy, or purpose names
+- object-store/provider dependencies
+
 ### `AppFoundryUpload`
 
 Purpose:

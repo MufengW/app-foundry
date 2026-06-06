@@ -1,0 +1,9 @@
+{
+  "name": "@app-foundry/media",
+  "version": "0.0.0",
+  "description": "AppFoundry ArkTS media upload preparation",
+  "main": "src/main/ets/MediaUploadPreflight.ets",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}
