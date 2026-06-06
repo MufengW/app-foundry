@@ -13,12 +13,14 @@ let package = Package(
       "AppFoundryCore",
       "AppFoundryImage",
       "AppFoundryFeedback",
-      "AppFoundryUpload"
+      "AppFoundryUpload",
+      "AppFoundryMedia"
     ]),
     .library(name: "AppFoundryCore", targets: ["AppFoundryCore"]),
     .library(name: "AppFoundryImage", targets: ["AppFoundryImage"]),
     .library(name: "AppFoundryFeedback", targets: ["AppFoundryFeedback"]),
-    .library(name: "AppFoundryUpload", targets: ["AppFoundryUpload"])
+    .library(name: "AppFoundryUpload", targets: ["AppFoundryUpload"]),
+    .library(name: "AppFoundryMedia", targets: ["AppFoundryMedia"])
   ],
   targets: [
     .target(name: "AppFoundryCore"),
@@ -28,11 +30,13 @@ let package = Package(
       "AppFoundryImage"
     ]),
     .target(name: "AppFoundryUpload", dependencies: ["AppFoundryCore"]),
+    .target(name: "AppFoundryMedia", dependencies: ["AppFoundryCore"]),
     .testTarget(name: "AppFoundrySwiftTests", dependencies: [
       "AppFoundryCore",
       "AppFoundryImage",
       "AppFoundryFeedback",
-      "AppFoundryUpload"
+      "AppFoundryUpload",
+      "AppFoundryMedia"
     ])
   ]
 )

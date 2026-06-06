@@ -1,6 +1,6 @@
 # AppFoundry Swift
 
-SwiftPM package for native feedback, screenshot, and upload primitives.
+SwiftPM package for native feedback, screenshot, media, and upload primitives.
 
 The package is intentionally UI-agnostic. It does not import SwiftUI, UIKit, or
 PencilKit in core targets. Consumer apps can wrap these value types with their
@@ -14,6 +14,7 @@ own screens, image pickers, annotation surfaces, upload clients, and auth.
 | `AppFoundryImage` | Screenshot magic-byte detection, upload preparation, and annotation geometry contracts. |
 | `AppFoundryFeedback` | Feedback draft, attachment, and submission value types. |
 | `AppFoundryUpload` | Multipart form-data builder and upload request primitives. |
+| `AppFoundryMedia` | Framework-agnostic media upload preflight for image, video, and audio bytes. |
 
 ## Example
 
@@ -71,6 +72,24 @@ let screenshot = try JSONDecoder().decode(
   FeedbackAttachmentStatus.self,
   from: Data(#"{"attached":false,"error":"validation_failed"}"#.utf8)
 )
+```
+
+Audio, video, and image upload surfaces can preflight raw bytes before sending
+base64 payloads or multipart bodies to an app-owned backend:
+
+```swift
+import AppFoundryMedia
+
+let media = try MediaUploadPreparer.prepare(
+  data: audioData,
+  declaredContentType: "audio/m4a",
+  policy: MediaPreparationPolicy(
+    allowedContentTypes: MediaContentType.audioUploadContentTypes,
+    preferDeclaredContentType: true
+  )
+)
+
+let encoded = media.data.base64EncodedString()
 ```
 
 ## Development

@@ -4,6 +4,7 @@ import AppFoundryCore
 import AppFoundryImage
 import AppFoundryFeedback
 import AppFoundryUpload
+import AppFoundryMedia
 
 final class AppFoundrySwiftTests: XCTestCase {
   func testScreenshotPreparationUsesMagicBytesWhenDeclarationIsMissing() throws {
@@ -29,6 +30,53 @@ final class AppFoundrySwiftTests: XCTestCase {
     ) { error in
       XCTAssertEqual((error as? AppFoundryIssue)?.code, "file_too_large")
     }
+  }
+
+  func testMediaPreparationAllowsCompatibleM4AAudio() throws {
+    let m4a = Data([0x00, 0x00, 0x00, 0x18]) + Data("ftypM4A ".utf8) + Data([0x00, 0x00, 0x00, 0x00])
+    let prepared = try MediaUploadPreparer.prepare(
+      data: m4a,
+      declaredContentType: "audio/m4a",
+      policy: MediaPreparationPolicy(
+        allowedContentTypes: MediaContentType.audioUploadContentTypes,
+        preferDeclaredContentType: true
+      )
+    )
+
+    XCTAssertEqual(prepared.contentType, .audioM4a)
+    XCTAssertEqual(prepared.detectedContentType, .audioMp4)
+    XCTAssertEqual(prepared.declaredContentType, .audioM4a)
+    XCTAssertEqual(prepared.fileExtension, "m4a")
+  }
+
+  func testMediaPreparationRejectsMismatchedBytes() throws {
+    let png = Data([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
+    XCTAssertThrowsError(
+      try MediaUploadPreparer.prepare(
+        data: png,
+        declaredContentType: "audio/m4a",
+        policy: MediaPreparationPolicy(allowedContentTypes: MediaContentType.audioUploadContentTypes)
+      )
+    ) { error in
+      XCTAssertEqual((error as? AppFoundryIssue)?.code, "detected_content_type_not_allowed")
+    }
+  }
+
+  func testMediaPreparationAllowsWavAlias() throws {
+    let wav = Data("RIFF".utf8) + Data([0x00, 0x00, 0x00, 0x00]) + Data("WAVE".utf8)
+    let prepared = try MediaUploadPreparer.prepare(
+      data: wav,
+      declaredContentType: "audio/x-wav",
+      policy: MediaPreparationPolicy(
+        allowedContentTypes: [.audioXWav],
+        preferDeclaredContentType: true
+      )
+    )
+
+    XCTAssertEqual(prepared.contentType, .audioXWav)
+    XCTAssertEqual(prepared.detectedContentType, .audioWav)
+    XCTAssertEqual(prepared.fileExtension, "wav")
   }
 
   func testAnnotationPrimitivesValidateNormalizedGeometry() throws {
