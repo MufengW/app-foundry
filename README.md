@@ -35,6 +35,8 @@ Current packages:
 | `packages/swift/AppFoundryImage` | Swift screenshot magic-byte detection and annotation geometry contracts. |
 | `packages/swift/AppFoundryFeedback` | Swift feedback draft, attachment, and submission value types. |
 | `packages/swift/AppFoundryUpload` | Swift multipart form-data builder and upload primitives. |
+| `packages/swift/AppFoundryMedia` | Swift image/video/audio upload preparation and magic-byte validation. |
+| `packages/kotlin/media` | Kotlin/JVM image/video/audio upload preparation and magic-byte validation. |
 
 Planned or recipe-backed areas:
 

@@ -218,6 +218,38 @@ Must avoid:
 - hardcoding copy
 - hardcoding backend URL shape
 
+### `AppFoundryMedia`
+
+Purpose:
+
+- image, video, and audio upload preparation
+- magic-byte MIME detection
+- byte-limit policy checks
+- normalized file-extension hints
+
+Must avoid:
+
+- performing network uploads
+- assuming one app's media workflows
+- depending on platform UI picker APIs
+
+## Kotlin Packages
+
+### `packages/kotlin/media`
+
+Purpose:
+
+- Kotlin/JVM image, video, and audio upload preparation
+- magic-byte MIME detection
+- reusable upload policies for Android clients and JVM services
+- normalized file-extension hints for app-owned multipart adapters
+
+Must avoid:
+
+- Android UI dependencies
+- OkHttp, Retrofit, or storage-provider dependencies
+- app-specific purpose names or backend routes
+
 ### `AppFoundryUpload`
 
 Purpose:
