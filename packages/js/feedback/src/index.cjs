@@ -24,6 +24,13 @@ const DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES = [
   "image/gif",
   "image/webp",
 ];
+const FEEDBACK_ATTACHMENT_STATUS_ERRORS = [
+  "validation_failed",
+  "upload_failed",
+  "storage_unavailable",
+  "not_provided",
+  "unknown",
+];
 const STRUCTURED_FEEDBACK_FIELDS = [
   "observedBehavior",
   "expectedBehavior",
@@ -318,6 +325,27 @@ function normalizeFeedbackAttachment(attachment) {
   };
 }
 
+function normalizeFeedbackAttachmentStatus(status) {
+  if (!status || typeof status !== "object" || Array.isArray(status)) {
+    throw new AppFoundryError("Feedback attachment status must be an object.", "feedback.attachment_status_invalid");
+  }
+
+  const attached = status.attached === true;
+  if (attached) {
+    return { attached: true };
+  }
+
+  return {
+    attached: false,
+    error: normalizeFeedbackAttachmentStatusError(status.error ?? status.reason),
+  };
+}
+
+function normalizeFeedbackAttachmentStatusError(value) {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return FEEDBACK_ATTACHMENT_STATUS_ERRORS.includes(normalized) ? normalized : "unknown";
+}
+
 async function storeFeedbackAttachment(input) {
   if (!input || typeof input !== "object") {
     throw new AppFoundryError("Feedback attachment upload input is required.", "feedback.attachment_upload_required");
@@ -570,6 +598,7 @@ module.exports = {
   DEFAULT_DEBUG_SNAPSHOT_WINDOW_MINUTES,
   DEFAULT_DEBUG_SNAPSHOT_MAX_EVENTS,
   DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES,
+  FEEDBACK_ATTACHMENT_STATUS_ERRORS,
   STRUCTURED_FEEDBACK_FIELDS,
   DEFAULT_STRUCTURED_FEEDBACK_HEADINGS,
   createFeedbackService,
@@ -580,5 +609,7 @@ module.exports = {
   normalizeFeedbackContext,
   normalizeFeedbackAttachments,
   normalizeFeedbackAttachment,
+  normalizeFeedbackAttachmentStatus,
+  normalizeFeedbackAttachmentStatusError,
   storeFeedbackAttachment,
 };

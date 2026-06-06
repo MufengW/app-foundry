@@ -56,6 +56,28 @@ Recommended fields:
 - `height`
 - `createdAt`
 
+### Attachment Status
+
+A submission response may report whether an optional attachment was accepted
+without turning the whole feedback submission into a failure.
+
+Recommended fields:
+
+- `attached`
+- `error`
+
+Supported `error` values:
+
+- `validation_failed`
+- `upload_failed`
+- `storage_unavailable`
+- `not_provided`
+- `unknown`
+
+Consumers should treat `{ attached: false }` as non-blocking when the feedback
+record itself was created. Show a warning only when the attachment matters to
+the user, and avoid retrying provider or storage work implicitly.
+
 ### Debug Snapshot
 
 A bounded, redacted set of debug events attached at submission time.
@@ -134,6 +156,17 @@ export interface StoreFeedbackAttachmentResult {
   storedObject: StoredObject;
   validation: ValidateUploadResult;
 }
+
+export type FeedbackAttachmentStatusError =
+  | "validation_failed"
+  | "upload_failed"
+  | "storage_unavailable"
+  | "not_provided"
+  | "unknown";
+
+export type FeedbackAttachmentStatus =
+  | { attached: true }
+  | { attached: false; error: FeedbackAttachmentStatusError };
 ```
 
 Admin list queries may include portable triage filters:

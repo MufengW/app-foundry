@@ -22,6 +22,13 @@ export const DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES = [
   "image/gif",
   "image/webp",
 ];
+export const FEEDBACK_ATTACHMENT_STATUS_ERRORS = [
+  "validation_failed",
+  "upload_failed",
+  "storage_unavailable",
+  "not_provided",
+  "unknown",
+];
 export const STRUCTURED_FEEDBACK_FIELDS = [
   "observedBehavior",
   "expectedBehavior",
@@ -314,6 +321,27 @@ export function normalizeFeedbackAttachment(attachment) {
     height: positiveNumberOrUndefined(attachment.height),
     createdAt: normalizeDateLike(attachment.createdAt),
   };
+}
+
+export function normalizeFeedbackAttachmentStatus(status) {
+  if (!status || typeof status !== "object" || Array.isArray(status)) {
+    throw new AppFoundryError("Feedback attachment status must be an object.", "feedback.attachment_status_invalid");
+  }
+
+  const attached = status.attached === true;
+  if (attached) {
+    return { attached: true };
+  }
+
+  return {
+    attached: false,
+    error: normalizeFeedbackAttachmentStatusError(status.error ?? status.reason),
+  };
+}
+
+export function normalizeFeedbackAttachmentStatusError(value) {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return FEEDBACK_ATTACHMENT_STATUS_ERRORS.includes(normalized) ? normalized : "unknown";
 }
 
 export async function storeFeedbackAttachment(input) {

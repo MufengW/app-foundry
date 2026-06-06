@@ -69,6 +69,17 @@ by default, while blank optional sections are omitted. Consumers can pass custom
 `structuredContentOptions.headings` to preserve existing admin copy without
 changing stored feedback rows.
 
+Optional attachment uploads can report non-blocking status back to clients:
+
+```js
+import { normalizeFeedbackAttachmentStatus } from "@app-foundry/feedback";
+
+const screenshot = normalizeFeedbackAttachmentStatus({
+  attached: false,
+  error: "validation_failed"
+});
+```
+
 The service owns validation, debug snapshot creation, lifecycle input
 normalization, and notifier hooks. The consumer app still owns persistence
 through a `FeedbackRepository` adapter. Notifier hooks such as

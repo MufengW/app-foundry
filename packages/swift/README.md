@@ -63,6 +63,16 @@ let submission = try FeedbackDraft(
 ).validated()
 ```
 
+Client responses can decode optional attachment status without treating the
+whole feedback submission as failed:
+
+```swift
+let screenshot = try JSONDecoder().decode(
+  FeedbackAttachmentStatus.self,
+  from: Data(#"{"attached":false,"error":"validation_failed"}"#.utf8)
+)
+```
+
 ## Development
 
 ```bash

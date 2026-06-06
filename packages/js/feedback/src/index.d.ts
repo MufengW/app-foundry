@@ -17,6 +17,13 @@ export declare const DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES: readonly [
   "image/gif",
   "image/webp"
 ];
+export declare const FEEDBACK_ATTACHMENT_STATUS_ERRORS: readonly [
+  "validation_failed",
+  "upload_failed",
+  "storage_unavailable",
+  "not_provided",
+  "unknown"
+];
 export declare const STRUCTURED_FEEDBACK_FIELDS: readonly [
   "observedBehavior",
   "expectedBehavior",
@@ -60,6 +67,17 @@ export interface FeedbackAttachmentRecord extends FeedbackAttachmentInput {
   kind: FeedbackAttachmentKind;
   contentType: string;
 }
+
+export type FeedbackAttachmentStatusError =
+  | "validation_failed"
+  | "upload_failed"
+  | "storage_unavailable"
+  | "not_provided"
+  | "unknown";
+
+export type FeedbackAttachmentStatus =
+  | { attached: true }
+  | { attached: false; error: FeedbackAttachmentStatusError };
 
 export interface FeedbackAttachmentObjectStore {
   putObject(input: PutObjectInput): Promise<StoredObject>;
@@ -293,4 +311,6 @@ export declare function normalizeFeedbackType(value: unknown): FeedbackType;
 export declare function normalizeFeedbackContext(context: unknown): FeedbackContext;
 export declare function normalizeFeedbackAttachments(attachments: unknown): FeedbackAttachmentRecord[];
 export declare function normalizeFeedbackAttachment(attachment: unknown): FeedbackAttachmentRecord;
+export declare function normalizeFeedbackAttachmentStatus(status: unknown): FeedbackAttachmentStatus;
+export declare function normalizeFeedbackAttachmentStatusError(value: unknown): FeedbackAttachmentStatusError;
 export declare function storeFeedbackAttachment(input: StoreFeedbackAttachmentInput): Promise<StoreFeedbackAttachmentResult>;

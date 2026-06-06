@@ -3,12 +3,15 @@ import { createRequire } from "node:module";
 import { describe, it } from "node:test";
 import {
   DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES,
+  FEEDBACK_ATTACHMENT_STATUS_ERRORS,
   DEFAULT_STRUCTURED_FEEDBACK_HEADINGS,
   STRUCTURED_FEEDBACK_FIELDS,
   buildStructuredFeedbackContent,
   createFeedbackService,
   normalizeCreateFeedbackInput,
   normalizeFeedbackAttachment,
+  normalizeFeedbackAttachmentStatus,
+  normalizeFeedbackAttachmentStatusError,
   normalizeStructuredFeedbackInput,
   normalizeFeedbackType,
   storeFeedbackAttachment,
@@ -299,6 +302,33 @@ describe("feedback input normalizers", () => {
     );
   });
 
+  it("normalizes attachment upload response status", () => {
+    assert.deepEqual(FEEDBACK_ATTACHMENT_STATUS_ERRORS, [
+      "validation_failed",
+      "upload_failed",
+      "storage_unavailable",
+      "not_provided",
+      "unknown",
+    ]);
+    assert.deepEqual(normalizeFeedbackAttachmentStatus({ attached: true, error: "validation_failed" }), {
+      attached: true,
+    });
+    assert.deepEqual(normalizeFeedbackAttachmentStatus({ attached: false, error: "validation_failed" }), {
+      attached: false,
+      error: "validation_failed",
+    });
+    assert.deepEqual(normalizeFeedbackAttachmentStatus({ attached: false, reason: "upload_failed" }), {
+      attached: false,
+      error: "upload_failed",
+    });
+    assert.equal(normalizeFeedbackAttachmentStatusError("vendor_specific_failure"), "unknown");
+    assert.deepEqual(normalizeFeedbackAttachmentStatus({ attached: false, error: "vendor_specific_failure" }), {
+      attached: false,
+      error: "unknown",
+    });
+    assert.throws(() => normalizeFeedbackAttachmentStatus(null), /status/);
+  });
+
   it("rejects blank feedback content", () => {
     assert.throws(() => normalizeCreateFeedbackInput({ type: "bug", content: "   " }), /content/);
   });
@@ -460,7 +490,9 @@ describe("storeFeedbackAttachment", () => {
   it("exports the attachment helper from the CommonJS entry", () => {
     const cjs = require("../src/index.cjs");
     assert.equal(typeof cjs.storeFeedbackAttachment, "function");
+    assert.equal(typeof cjs.normalizeFeedbackAttachmentStatus, "function");
     assert.equal(typeof cjs.buildStructuredFeedbackContent, "function");
     assert.deepEqual(cjs.DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES, DEFAULT_FEEDBACK_ATTACHMENT_CONTENT_TYPES);
+    assert.deepEqual(cjs.FEEDBACK_ATTACHMENT_STATUS_ERRORS, FEEDBACK_ATTACHMENT_STATUS_ERRORS);
   });
 });

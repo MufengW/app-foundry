@@ -60,6 +60,52 @@ public struct FeedbackAttachment: Codable, Equatable {
   }
 }
 
+public enum FeedbackAttachmentStatusError: String, Codable, Equatable {
+  case validationFailed = "validation_failed"
+  case uploadFailed = "upload_failed"
+  case storageUnavailable = "storage_unavailable"
+  case notProvided = "not_provided"
+  case unknown
+
+  public init(rawStatusError: String?) {
+    guard let normalized = rawStatusError?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+    else {
+      self = .unknown
+      return
+    }
+    self = FeedbackAttachmentStatusError(rawValue: normalized) ?? .unknown
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    self.init(rawStatusError: try? container.decode(String.self))
+  }
+}
+
+public struct FeedbackAttachmentStatus: Codable, Equatable {
+  public var attached: Bool
+  public var error: FeedbackAttachmentStatusError?
+
+  private enum CodingKeys: String, CodingKey {
+    case attached
+    case error
+  }
+
+  public init(attached: Bool, error: FeedbackAttachmentStatusError? = nil) {
+    self.attached = attached
+    self.error = attached ? nil : (error ?? .unknown)
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    let attached = (try? container.decode(Bool.self, forKey: .attached)) ?? false
+    let error = try? container.decode(FeedbackAttachmentStatusError.self, forKey: .error)
+    self.init(attached: attached, error: error)
+  }
+}
+
 public struct FeedbackContext: Codable, Equatable {
   public var platform: String?
   public var appVersion: String?

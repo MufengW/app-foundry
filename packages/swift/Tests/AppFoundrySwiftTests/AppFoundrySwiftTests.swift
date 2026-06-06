@@ -159,6 +159,30 @@ final class AppFoundrySwiftTests: XCTestCase {
     )
   }
 
+  func testFeedbackAttachmentStatusDecodesDroppedScreenshotResponses() throws {
+    let dropped = try JSONDecoder().decode(
+      FeedbackAttachmentStatus.self,
+      from: Data(#"{"attached":false,"error":"validation_failed"}"#.utf8)
+    )
+    let unknown = try JSONDecoder().decode(
+      FeedbackAttachmentStatus.self,
+      from: Data(#"{"attached":false,"error":"vendor_specific_failure"}"#.utf8)
+    )
+    let attached = try JSONDecoder().decode(
+      FeedbackAttachmentStatus.self,
+      from: Data(#"{"attached":true,"error":"validation_failed"}"#.utf8)
+    )
+
+    XCTAssertEqual(dropped, FeedbackAttachmentStatus(attached: false, error: .validationFailed))
+    XCTAssertEqual(unknown.error, .unknown)
+    XCTAssertEqual(attached, FeedbackAttachmentStatus(attached: true))
+
+    let encoded = try JSONEncoder().encode(FeedbackAttachmentStatus(attached: false, error: .uploadFailed))
+    let decoded = try JSONDecoder().decode(FeedbackAttachmentStatus.self, from: encoded)
+
+    XCTAssertEqual(decoded, FeedbackAttachmentStatus(attached: false, error: .uploadFailed))
+  }
+
   func testMultipartFormDataBuilder() throws {
     let form = try MultipartFormDataBuilder.build(
       parts: [

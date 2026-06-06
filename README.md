@@ -231,6 +231,8 @@ await feedback.create({
 The helper validates upload bytes before storage, writes through an injected
 object-store adapter, and returns metadata that can be persisted by the
 app-owned feedback repository.
+Use `normalizeFeedbackAttachmentStatus()` when a consumer API accepts the
+feedback row but drops an optional screenshot or other attachment.
 
 ## Documentation
 
