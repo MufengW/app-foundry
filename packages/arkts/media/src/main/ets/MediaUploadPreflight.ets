@@ -47,7 +47,7 @@ export class MediaUploadPolicy {
 }
 
 export class PreparedMediaUpload {
-  bytes: Uint8Array = new Uint8Array();
+  bytes: Uint8Array = new Uint8Array(0);
   mimeType: string = '';
   detectedMimeType: string | undefined = undefined;
   declaredMimeType: string | undefined = undefined;
@@ -246,7 +246,7 @@ export function detectUploadContentType(bytes: Uint8Array): string | undefined {
 }
 
 export function normalizeMimeType(mimeType?: string): string | undefined {
-  if (mimeType === undefined || mimeType === null) return undefined;
+  if (mimeType === undefined) return undefined;
   const normalized = mimeType.split(';')[0].trim().toLowerCase();
   if (normalized.length === 0) return undefined;
   return normalized === 'image/jpg' ? 'image/jpeg' : normalized;
