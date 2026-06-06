@@ -50,7 +50,10 @@ V0 excludes:
 ## Development Workflow
 
 - Prefer a sibling local dependency during early integration.
-- Do not add AppFoundry as a submodule to consumer apps until V0 APIs are stable.
+- If a consumer app needs reproducible CI or deployment before packages are
+  published, a pinned repo-local `app-foundry/` submodule is acceptable after
+  the adopted contracts have tests. Commit the submodule pointer with the
+  consumer changes and verify builds against that exact revision.
 - Create feature branches per repo; do not edit multiple repos on `main`.
 - Keep private implementation notes out of the public repository unless they
   are rewritten as reusable documentation.

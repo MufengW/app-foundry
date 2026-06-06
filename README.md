@@ -79,8 +79,8 @@ backend, not a new platform you have to move onto.
 
 ## Install
 
-The packages are not published yet. During V0 extraction, consumer apps use a
-local sibling dependency:
+The packages are not published yet. During V0 extraction, consumer apps can use
+a local sibling dependency:
 
 ```json
 {
@@ -94,6 +94,11 @@ local sibling dependency:
 
 After the public package boundary stabilizes, these will move to registry
 versions.
+
+For pre-release CI or deployment, a consumer app may pin AppFoundry as a
+repo-local submodule or otherwise include it in the build context. Treat that
+pointer like a dependency version: update it intentionally, run focused tests,
+and commit it with the app changes that rely on the new contracts.
 
 ## Development
 

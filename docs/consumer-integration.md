@@ -16,17 +16,31 @@ workspace/
   consumer-app/
 ```
 
-## Why Sibling Local Dependency First
+When a consumer app needs reproducible CI or deployment before packages are
+published, it can instead pin AppFoundry as a repo-local submodule:
+
+```text
+consumer-app/
+  app-foundry/
+  backend/
+```
+
+## Why Sibling Local Dependency First, Then Pin
 
 Early AppFoundry APIs may change often. Sibling local dependencies reduce
 friction while contracts stabilize.
 
-Avoid submodules until:
+Avoid submodules until at least the adopted surface is test-backed:
 
-- AppFoundry has release tags
 - at least one module is adopted end-to-end
 - tests exist for shared contracts
-- package public APIs are stable enough to pin
+- package public APIs are stable enough to pin for that consumer
+
+After that point, a submodule can be a reasonable pre-publication deployment
+bridge because it puts the exact AppFoundry revision inside the consumer app's
+build context. Treat submodule pointer updates like dependency upgrades: review
+the diff, run focused tests, and commit the pointer with the app changes that
+depend on it.
 
 ## JavaScript Consumer Strategy
 
@@ -53,6 +67,8 @@ of these is true:
 - AppFoundry packages are published and pinned by version.
 - AppFoundry is vendored or otherwise included in the deployment build context
   by an explicit, reviewed packaging plan.
+- AppFoundry is pinned as a repo-local submodule and the deploy target checks
+  out submodules.
 - The deploy target is configured to check out a workspace that includes both
   the consumer repo and `app-foundry/`.
 

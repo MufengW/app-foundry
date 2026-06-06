@@ -226,7 +226,9 @@ During active extraction:
 
 - Use a sibling local repository during development.
 - Consumer apps should use local path dependencies.
-- Do not add AppFoundry as a submodule until V0 APIs stabilize.
+- For consumers that need reproducible CI or deployment before packages are
+  published, a pinned repo-local submodule is acceptable once the adopted
+  contracts are covered by tests. Treat pointer updates as dependency upgrades.
 
 After V0 stabilizes:
 
