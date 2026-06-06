@@ -250,11 +250,10 @@ export function normalizeStructuredFeedbackInput(input, options = {}) {
     );
   }
 
-  return {
-    observedBehavior,
-    expectedBehavior,
-    suspectedCause,
-  };
+  const normalized = { observedBehavior };
+  if (expectedBehavior) normalized.expectedBehavior = expectedBehavior;
+  if (suspectedCause) normalized.suspectedCause = suspectedCause;
+  return normalized;
 }
 
 function resolveFeedbackContent(input) {

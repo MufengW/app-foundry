@@ -125,8 +125,8 @@ export interface StructuredFeedbackContentInput {
 
 export interface StructuredFeedbackContent {
   observedBehavior: string;
-  expectedBehavior: string;
-  suspectedCause: string;
+  expectedBehavior?: string;
+  suspectedCause?: string;
 }
 
 export interface StructuredFeedbackContentOptions {

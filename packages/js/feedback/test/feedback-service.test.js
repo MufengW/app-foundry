@@ -373,6 +373,16 @@ describe("feedback input normalizers", () => {
         suspectedCause: "state lived only in the sheet",
       }
     );
+    assert.deepEqual(
+      normalizeStructuredFeedbackInput({
+        observedBehavior: " sheet disappeared ",
+        expectedBehavior: " ",
+        suspectedCause: "\n",
+      }),
+      {
+        observedBehavior: "sheet disappeared",
+      }
+    );
     assert.throws(
       () => buildStructuredFeedbackContent({ expectedBehavior: "show a warning" }),
       /observedBehavior/
