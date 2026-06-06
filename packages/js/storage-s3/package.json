@@ -2,11 +2,13 @@
   "name": "@app-foundry/storage-s3",
   "version": "0.0.0",
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./src/index.cjs",
+  "module": "./src/index.js",
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
+      "require": "./src/index.cjs",
       "import": "./src/index.js"
     }
   },
