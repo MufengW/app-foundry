@@ -120,6 +120,45 @@ final class AppFoundrySwiftTests: XCTestCase {
     }
   }
 
+  func testFeedbackDraftBuildsFromStructuredContent() throws {
+    let draft = try FeedbackDraft(
+      type: .bug,
+      structuredContent: StructuredFeedbackContent(
+        observedBehavior: "  Upload succeeded but screenshot disappeared.  ",
+        expectedBehavior: "Screenshot should stay attached.",
+        suspectedCause: "Client ignored the screenshot response status."
+      ),
+      headings: StructuredFeedbackContentHeadings(
+        observedBehavior: "Bug symptom",
+        expectedBehavior: "Expected correct behavior",
+        suspectedCause: "Possible root cause"
+      ),
+      context: FeedbackContext(platform: "ios"),
+      attachDebugLogs: true,
+      debugLogScopes: ["api.feedback"]
+    )
+
+    let submission = try draft.validated()
+
+    XCTAssertEqual(submission.type, .bug)
+    XCTAssertEqual(submission.context.platform, "ios")
+    XCTAssertTrue(submission.attachDebugLogs)
+    XCTAssertEqual(submission.debugLogScopes, ["api.feedback"])
+    XCTAssertEqual(
+      submission.content,
+      [
+        "Bug symptom",
+        "Upload succeeded but screenshot disappeared.",
+        "",
+        "Expected correct behavior",
+        "Screenshot should stay attached.",
+        "",
+        "Possible root cause",
+        "Client ignored the screenshot response status."
+      ].joined(separator: "\n")
+    )
+  }
+
   func testMultipartFormDataBuilder() throws {
     let form = try MultipartFormDataBuilder.build(
       parts: [

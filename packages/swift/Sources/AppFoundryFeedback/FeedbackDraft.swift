@@ -187,6 +187,29 @@ public struct FeedbackDraft: Equatable {
     self.debugLogScopes = debugLogScopes
   }
 
+  public init(
+    type: FeedbackType = .other,
+    structuredContent: StructuredFeedbackContent,
+    headings: StructuredFeedbackContentHeadings = StructuredFeedbackContentHeadings(),
+    requireObservedBehavior: Bool = true,
+    context: FeedbackContext = FeedbackContext(),
+    attachments: [FeedbackAttachment] = [],
+    attachDebugLogs: Bool = false,
+    debugLogScopes: [String] = []
+  ) throws {
+    self.init(
+      type: type,
+      content: try structuredContent.buildContent(
+        headings: headings,
+        requireObservedBehavior: requireObservedBehavior
+      ),
+      context: context,
+      attachments: attachments,
+      attachDebugLogs: attachDebugLogs,
+      debugLogScopes: debugLogScopes
+    )
+  }
+
   public func validated(policy: FeedbackDraftPolicy = FeedbackDraftPolicy()) throws -> FeedbackSubmission {
     let trimmed = try AppFoundryStrings.trimmedNonEmpty(content, fieldName: "feedback_content")
     if trimmed.count > policy.maxContentCharacters {
